@@ -842,7 +842,7 @@
       if (payState.balance < price) { alert("电量不足，当前余额 " + payState.balance + " " + pay.unit); return; }
       payState.balance -= price;
       for (var i = bf; i < total; i++) { var c = chapters[i]; if (!isUnlocked(c) && payState.unlocked.indexOf(c.id) === -1) payState.unlocked.push(c.id); }
-      savePay(); renderChapter(current, false); buildReaderToc(); renderTocActive(); showToast("购买成功！");
+      savePay(); renderChapter(bf, false); buildReaderToc(); renderTocActive(); showToast("购买成功！");
     }
 
     function doInlineSingle(idx) {
