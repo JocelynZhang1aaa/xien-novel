@@ -30,7 +30,8 @@ body {
   display: flex; flex-direction: column;
 }
 
-/* 席恩版：取消 iPhone 外框，9:16 自适应屏幕大小 */
+/* 席恩版：取消 iPhone 外框 */
+/* 桌面/平板：保持 9:16 手机预览比例，居中留白 */
 .phone.no-frame {
   --h: min(100vh - 48px, (100vw - 48px) * 16 / 9);
   height: var(--h);
@@ -38,6 +39,20 @@ body {
   aspect-ratio: 9 / 16;
   border-radius: 0;
   box-shadow: none;
+}
+
+/* 手机竖屏：铺满整屏，按手机实际尺寸自适应（含刘海安全区，已全局生效） */
+@media (max-width: 600px) and (orientation: portrait) {
+  body { padding: 0; overflow: hidden; }
+  .phone.no-frame {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
 }
 
 /* 通用 SVG 箭头（替代 ‹ › 字形，跨平台一致渲染） */
