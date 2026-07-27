@@ -30,6 +30,16 @@ body {
   display: flex; flex-direction: column;
 }
 
+/* 席恩版：取消 iPhone 外框，9:16 自适应屏幕大小 */
+.phone.no-frame {
+  --h: min(100vh - 48px, (100vw - 48px) * 16 / 9);
+  height: var(--h);
+  width: calc(var(--h) * 9 / 16);
+  aspect-ratio: 9 / 16;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* 通用 SVG 箭头（替代 ‹ › 字形，跨平台一致渲染） */
 .chev { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
 .intro-back .chev, .reader-topbar .t-btn .chev { width: 22px; height: 22px; }
