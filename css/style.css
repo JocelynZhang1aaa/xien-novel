@@ -1,0 +1,777 @@
+/* ===================== 对话转小说 · 设计系统 ===================== */
+:root {
+  --brand: #5b8def;
+  --brand-rgb: 91,141,239;
+  --brand-deep: #2b3a67;
+  --safe-top: env(safe-area-inset-top, 80px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #0f1115;
+  color: #1a1a1a;
+}
+
+body {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px;
+}
+
+/* iPhone 15 尺寸: 393 x 852 pt */
+.phone {
+  position: relative; width: 393px; height: 852px;
+  background: #f5f5f5; border-radius: 38px; overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 10px #1c1f26, 0 0 0 12px #2a2e37;
+  display: flex; flex-direction: column;
+}
+
+/* 通用 SVG 箭头（替代 ‹ › 字形，跨平台一致渲染） */
+.chev { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.intro-back .chev, .reader-topbar .t-btn .chev { width: 22px; height: 22px; }
+.reader-bottombar .b-btn .chev { width: 20px; height: 20px; }
+.toc-list li .arrow .chev { width: 16px; height: 16px; }
+
+/* 状态栏（保留顶部空间，返回按钮不遮挡） */
+.statusbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: calc(54px + var(--safe-top)); padding-top: var(--safe-top);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-left: 28px; padding-right: 28px;
+  font-size: 14px; font-weight: 600; color: #1a1a1a;
+  z-index: 50; pointer-events: none;
+}
+.statusbar .icons { display: flex; gap: 6px; align-items: center; }
+.statusbar .bat { width: 24px; height: 12px; border: 1.5px solid currentColor; border-radius: 3px; position: relative; }
+.statusbar .bat::after { content:""; position:absolute; right:-3px; top:3px; width:2px; height:5px; background:currentColor; border-radius:0 1px 1px 0; }
+.statusbar .bat::before { content:""; position:absolute; left:1px; top:1px; bottom:1px; width:70%; background:currentColor; border-radius:1px; }
+
+.page { position: absolute; inset: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* 单页视图切换：三视图（解锁 / 简介 / 阅读） */
+.view-unlock  { z-index: 1; }
+.view-loading { z-index: 2; visibility: hidden; pointer-events: none; }
+.view-intro   { z-index: 1; visibility: hidden; pointer-events: none; }
+.view-reader  { z-index: 3; visibility: hidden; pointer-events: none; }
+body.show-loading .view-unlock  { visibility: hidden; pointer-events: none; }
+body.show-loading .view-loading { visibility: visible; pointer-events: auto; }
+body.show-loading .view-intro   { visibility: hidden; pointer-events: none; }
+body.show-reader .view-unlock  { visibility: hidden; pointer-events: none; }
+body.show-reader .view-loading { visibility: hidden; pointer-events: none; }
+body.show-reader .view-intro   { visibility: hidden; pointer-events: none; }
+body.show-reader .view-reader  { visibility: visible; pointer-events: auto; }
+body.show-intro-only .view-unlock { display: none !important; }
+body.show-intro-only .view-intro  { visibility: visible !important; pointer-events: auto !important; }
+
+/* ===================== 页面零：解锁页（蓝色UI · 参考截图1风格） ===================== */
+.unlock-page {
+  background-image: url("../assets/bg-intro.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.unlock-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding-top: calc(112px + var(--safe-top));
+  display: flex; flex-direction: column; align-items: center;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.unlock-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* 装饰区：蓝发玩偶（无遮罩，原图展示） */
+.unlock-visual {
+  text-align: center;
+  padding: 24px 30px 8px;
+}
+.unlock-mascot {
+  width: 150px; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.08));
+}
+
+/* 标题 */
+.unlock-title {
+  font-size: 23px; font-weight: 800; line-height: 1.3;
+  color: #1a1a1a; text-align: center;
+  margin: 8px 0 2px; letter-spacing: 1px;
+}
+.unlock-title-line {
+  width: 120px; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--brand), transparent);
+  margin: 0 auto 28px; border-radius: 2px;
+}
+
+/* 功能说明卡片（一键成书） */
+.unlock-feature {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin: 4px 28px 24px;
+  padding: 16px 18px;
+  background: transparent;
+  border-radius: 14px;
+}
+.unlock-feature-icon {
+  flex-shrink: 0; width: 40px; height: 40px;
+  color: var(--brand);
+  background: rgba(var(--brand-rgb),.1);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.unlock-feature-icon svg { width: 26px; height: 26px; }
+.unlock-feature-text { flex: 1; min-width: 0; }
+.unlock-feature-title {
+  font-size: 15.5px; font-weight: 700; color: #1a1a1a;
+  line-height: 1.3; margin-bottom: 4px;
+}
+.unlock-feature-desc {
+  font-size: 13px; color: #666; line-height: 1.5;
+}
+
+/* 解锁按钮区（浅蓝底 + 蓝色外框，置底） */
+.unlock-action {
+  width: 100%; padding: 16px 28px calc(32px + var(--safe-bottom));
+  text-align: center;
+  margin-top: auto;
+}
+.unlock-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; height: 52px; border-radius: 26px;
+  font-size: 16.5px; font-weight: 700; letter-spacing: .5px;
+  cursor: pointer; transition: all .15s;
+  padding: 0 22px; box-sizing: border-box;
+  background: transparent;
+  color: var(--brand);
+  border: 1.5px solid var(--brand);
+  box-shadow: 0 2px 12px rgba(var(--brand-rgb),.15);
+}
+.unlock-btn:active { transform: scale(.98); box-shadow: 0 1px 6px rgba(var(--brand-rgb),.2); background: rgba(var(--brand-rgb),.08); }
+.unlock-btn-price {
+  font-size: 14px; font-weight: 700;
+  white-space: nowrap; flex-shrink: 0;
+}
+.unlock-balance {
+  margin-top: 12px; font-size: 12.5px; color: #888; text-align: center;
+}
+.unlock-balance b { color: var(--brand); font-weight: 600; }
+
+/* ===================== 页面零点五：Loading 页（蓝色背景 · 玩偶探出头） ===================== */
+.loading-page {
+  background-image: url("../assets/bg-intro.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.loading-body {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 28px calc(40px + var(--safe-bottom));
+  text-align: center;
+}
+.loading-visual {
+  position: relative;
+  width: 150px; height: 165px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.loading-mascot {
+  width: 132px; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.12));
+  animation: peek-bounce 2.4s ease-in-out infinite;
+}
+@keyframes peek-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+/* Loading 标题 + 轮播副文案 */
+.loading-text-wrap {
+  text-align: center;
+  padding: 0 24px;
+  width: 100%;
+}
+.loading-title {
+  font-size: 19px; font-weight: 700; color: #4a4744;
+  letter-spacing: 1px; line-height: 1.4;
+  margin-bottom: 14px;
+}
+.loading-text-track {
+  position: relative;
+  width: 100%;
+  min-height: 24px;
+}
+.loading-line {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .6s ease, transform .6s ease;
+  pointer-events: none;
+  font-size: 14px; font-weight: 400; color: #b5b0aa;
+  letter-spacing: .6px; line-height: 1.5;
+}
+.loading-line.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.loading-hint {
+  font-size: 12.5px; color: #999;
+  margin: 18px 0 4px; letter-spacing: .3px;
+}
+.loading-status {
+  font-size: 13px; color: var(--brand);
+  font-weight: 600; letter-spacing: .5px;
+  animation: loading-pulse 2s ease-in-out infinite;
+}
+@keyframes loading-pulse {
+  0%, 100% { opacity: .7; }
+  50% { opacity: 1; }
+}
+
+/* ===================== 页面一：简介页（微信读书风 · iPhone 15） ===================== */
+.intro-page {
+  background-image: url("../assets/bg-intro.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+
+/* 左上角返回 — 在状态栏下方，不遮挡时间/电量 */
+.intro-back {
+  position: absolute;
+  top: calc(54px + var(--safe-top) + 4px);
+  left: 14px;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.05);
+  color: #333; font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 45;
+}
+.intro-back:active { background: rgba(0,0,0,.12); }
+
+/* 滚动内容顶部留白：避开状态栏(时间/电量)与返回按钮 */
+.intro-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding-top: calc(60px + var(--safe-top));
+  /* 隐藏滚动条（仍可滑动） */
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.intro-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* 封面图 */
+.intro-cover-wrap {
+  text-align: center;
+  padding: 14px 40px 8px;
+  background: transparent;
+}
+.cover-img {
+  width: 110px;
+  height: 152px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+
+.intro-body { padding: 4px 22px calc(20px + var(--safe-bottom)); background: transparent; text-align: center; }
+.intro-body > * { text-align: left; }
+
+.novel-title {
+  font-size: 19px; font-weight: 700; line-height: 1.35;
+  margin: 8px 0 10px; color: #1a1a1a; text-align: center;
+}
+
+/* 作者行（纯文字，无icon） */
+.author-row {
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.author-name { font-size: 13px; color: #888; }
+
+/* 标签（最多 4 个） */
+.tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; justify-content: center; }
+.tag-pill {
+  font-size: 12px; color: #7fa8e0; background: transparent;
+  border: 1px solid #a8c7f0;
+  padding: 4px 11px; border-radius: 13px; white-space: nowrap;
+}
+
+/* ====== 统一区块标题（简介 / 目录） ====== */
+.section-head {
+  font-size: 15px; font-weight: 700; color: #1a1a1a;
+  margin-bottom: 8px; padding-top: 4px;
+}
+
+/* 简介（默认折叠 5 行，点击「更多」原地展开，无跳动、无滚动条） */
+.intro-section { margin-bottom: 16px; }
+.intro-desc { position: relative; }
+.novel-intro {
+  font-size: 13.5px; line-height: 1.85; color: #3a3a3a; margin: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5;
+  overflow: hidden;
+}
+.novel-intro p { margin: 0 0 8px; }
+.novel-intro p:last-child { margin-bottom: 0; }
+/* 「更多 / 收起」稳定位于正文下方，不随展开/收起位移 */
+.intro-more {
+  display: inline-block; margin-top: 8px;
+  font-size: 13px; color: var(--brand); cursor: pointer; font-weight: 500;
+}
+/* 展开态：仅解除行数限制（维持 -webkit-box，避免 display 切换造成闪烁/跳动） */
+.intro-desc.expanded .novel-intro { -webkit-line-clamp: unset; }
+
+/* 前 3 章目录预览 */
+.toc-preview { margin-top: 4px; }
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 4px; border-bottom: 1px solid #f0f0f0;
+  font-size: 14px; color: #2a2a2a; cursor: pointer; transition: background .15s;
+}
+.toc-list li:active { background: #f6f8ff; }
+.toc-list li .arrow { color: #c4c4c4; font-size: 17px; display: inline-flex; align-items: center; }
+.toc-list li.locked { color: #b5b5b5; cursor: pointer; }
+.toc-list li.locked:active { background: transparent; }
+.toc-list li .lock-tag {
+  font-size: 10px; color: #c9a23a; border: 1px solid #e8d9a0;
+  border-radius: 8px; padding: 1px 6px; margin-left: auto;
+}
+/* 目录世界分组头（v2：仅 index_v2 带 chaptersPerWorld 时渲染） */
+.toc-list li.toc-world {
+  display: block; font-weight: 700; font-size: 14px; color: #1a1a1c;
+  background: transparent; cursor: default; padding: 18px 4px 8px;
+  border-bottom: none; border-top: 1px solid #eee;
+}
+.toc-list li.toc-world:active { background: transparent; }
+.toc-list li.toc-tags {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start;
+  padding: 2px 4px 12px; cursor: default;
+  border-bottom: none; background: transparent;
+}
+.toc-list li.toc-tags:active { background: transparent; }
+
+/* 底部：引导聊天 + 阅读按钮（参考截图1风格） */
+.start-read-bar {
+  text-align: center;
+  padding: 24px 24px calc(28px + var(--safe-bottom));
+  background: transparent;
+}
+.start-read-hint {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 12.5px; color: #999; margin-bottom: 22px;
+  letter-spacing: 1.5px;
+}
+.start-read-hint::before,
+.start-read-hint::after {
+  content: "";
+  flex: 1; max-width: 48px; height: 1px;
+  background: linear-gradient(90deg, transparent, #ccc);
+}
+.start-read-hint::after {
+  background: linear-gradient(90deg, #ccc, transparent);
+}
+/* 阅读按钮 + 多章折扣 并列一行 */
+.start-read-actions {
+  display: flex; gap: 10px; justify-content: center; align-items: center;
+}
+.start-read-btn {
+  flex: 0 0 auto; width: 55%; min-width: 140px; height: 42px; border-radius: 21px;
+  padding: 0 16px; border: 1.5px solid var(--brand);
+  background: transparent; font-size: 14px; font-weight: 600;
+  color: var(--brand); cursor: pointer; transition: all .2s;
+  white-space: nowrap;
+}
+.start-read-btn:active { background: var(--brand); color: #fff; }
+
+/* 简介页「多章折扣」按钮（品牌浅蓝填充 + 品牌描边 + 品牌字，层级弱于继续阅读，但不至于太弱） */
+.intro-bulk-btn {
+  flex: 0 0 auto; width: 40%; min-width: 112px; height: 42px; padding: 0 16px; border-radius: 21px;
+  background: rgba(var(--brand-rgb),.12);
+  color: var(--brand);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid rgba(var(--brand-rgb),.45); transition: all .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap;
+}
+.intro-bulk-btn:active { background: rgba(var(--brand-rgb),.22); border-color: rgba(var(--brand-rgb),.6); }
+
+/* ====== 简介页付费半弹窗（截图2风格） ====== */
+.intro-pay-mask {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 90; opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.intro-pay-mask.open { opacity: 1; pointer-events: auto; }
+.intro-pay-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #fff; border-radius: 22px 22px 0 0;
+  padding: 0 0 calc(24px + var(--safe-bottom));
+  transform: translateY(100%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+  z-index: 91; text-align: center;
+}
+.intro-pay-sheet.open { transform: translateY(0); }
+
+/* 关闭按钮（圆形，在装饰区右上角） */
+.intro-pay-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.08); color: #999;
+  font-size: 15px; cursor: pointer; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.intro-pay-close:active { background: rgba(0,0,0,.15); }
+
+/* 装饰图区域（图片铺满） */
+.intro-pay-visual {
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  height: 200px;
+}
+.intro-pay-mascot {
+  font-size: 0; line-height: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.intro-pay-mascot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+/* 文案 */
+.intro-pay-text {
+  font-size: 16px; font-weight: 500; color: #222;
+  margin: 20px 20px 18px; letter-spacing: .5px;
+}
+
+/* 选项按钮区 */
+.intro-pay-options {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 0 20px 8px;
+}
+
+/* 半弹窗电量余额 */
+.intro-pay-balance {
+  margin-top: 4px; padding: 0 20px 20px;
+  font-size: 12.5px; color: #b0b0b0; text-align: center;
+}
+.intro-pay-balance b { color: var(--brand); font-weight: 600; }
+
+/* ====== 付费 pill 按钮（弹窗 / 内联共用同一套尺寸与交互，避免重复定义） ====== */
+.pay-opt-btn, .inline-pay-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; border-radius: 27px;
+  font-size: 16px; font-weight: 700; letter-spacing: .3px; cursor: pointer;
+  border: none; transition: all .15s;
+  padding: 0 4px 0 24px; box-sizing: border-box;
+}
+.pay-opt-btn { height: 54px; }
+.inline-pay-btn { height: 52px; }
+.pay-opt-label, .inline-pay-label { flex: 1; text-align: left; white-space: nowrap; }
+
+/* 右侧价格标签（🐾 + 价格） */
+.pay-opt-tag, .inline-pay-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--brand); color: #fff;
+  font-size: 13px; font-weight: 700;
+  padding: 6px 15px 6px 10px;
+  border-radius: 21px 19px 19px 21px;
+  margin-right: 2px; flex-shrink: 0; white-space: nowrap;
+}
+.pay-tag-icon, .inline-tag-icon { font-size: 14px; }
+
+/* 批量折扣（浅蓝底 + 蓝字 + 蓝框） */
+.pay-opt-bundle, .inline-pay-bulk {
+  background: rgba(var(--brand-rgb), .12);
+  color: var(--brand);
+  border: 1px solid rgba(var(--brand-rgb), .45);
+}
+.pay-opt-bundle:active, .inline-pay-bulk:active { background: rgba(var(--brand-rgb), .22); }
+
+/* 单章解锁（透明底 + 蓝框 + 蓝字） */
+.pay-opt-single, .inline-pay-single {
+  background: transparent; color: var(--brand);
+  border: 1px solid rgba(var(--brand-rgb), .45);
+}
+.pay-opt-single:active, .inline-pay-single:active { background: rgba(var(--brand-rgb), .08); }
+
+
+/* ===================== 页面二：阅读页（微信读书风 · iPhone 15） ===================== */
+/* 三段式常驻布局：顶栏(flex:0) / 正文滚动区(flex:1,min-h:0) / 底栏(flex:0) */
+.reader-page {
+  background: #f5edd8; /* 默认暖米色，参照截图 */
+}
+
+/* ---- 顶部导航栏（常驻；标题在返回按钮右侧，左对齐） ---- */
+.reader-topbar {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-start;
+  padding: calc(54px + var(--safe-top)) 14px 8px;
+  z-index: 40; color: #888;
+}
+.reader-topbar .t-btn {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; cursor: pointer; border: none; background: none;
+  color: #888 !important;
+  border-radius: 50%; flex-shrink: 0;
+}
+.reader-topbar .t-btn:active { background: rgba(0,0,0,.06); }
+/* 章节信息：紧贴返回按钮右侧，灰色小字 */
+.reader-topbar .chapter-info {
+  margin-left: 4px; padding-top: 2px;
+}
+.reader-topbar .chapter-name {
+  font-size: 14px; font-weight: 400; line-height: 1.35;
+  letter-spacing: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #888 !important;
+}
+.reader-topbar .chapter-sub {
+  font-size: 11px; color: #aaa !important; margin-top: 1px; letter-spacing: .5px;
+}
+/* 右侧目录按钮推到最右 */
+.reader-topbar .t-btn:last-child {
+  margin-left: auto;
+}
+
+/* ---- 正文分页容器（左右滑动翻页） ---- */
+.reader-scroll {
+  flex: 1 1 0px; /* 关键：flex:1 + min-height:0 防止被内容撑开 */
+  position: relative; overflow: hidden;
+}
+/* 横向轨道：每页占 100% 宽，靠 translateX 翻页 */
+.reader-track {
+  display: flex; height: 100%; width: 100%;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.reader-page-item {
+  flex: 0 0 100%; width: 100%; height: 100%;
+  overflow: hidden; padding: 4px 24px calc(80px + var(--safe-bottom)); box-sizing: border-box;
+}
+/* Toast 提示 */
+.toast {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9);
+  background: rgba(0,0,0,.8); color: #fff;
+  padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  z-index: 9999; opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  white-space: nowrap; max-width: 80%; text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+/* 字号由 JS 动态设置到 p 上 */
+.reader-content p {
+  line-height: 1.9; margin: 0 0 18px;
+  text-indent: 2em; letter-spacing: .2px;
+}
+
+/* 全书末页提示：继续聊天触发小说更新 */
+.chapter-end-tip {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; margin: 34px 0 6px; opacity: .55;
+}
+.chapter-end-tip .end-line {
+  flex: 0 0 auto; width: 34px; height: 1px;
+  background: currentColor; opacity: .5;
+}
+.chapter-end-tip .end-text {
+  font-size: 13px; letter-spacing: 1.5px; white-space: nowrap;
+}
+
+/* ---- 底部操作栏（常驻，不随内容滚走） ---- */
+.reader-bottombar {
+  flex: 0 0 auto;
+  height: calc(48px + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
+  display: flex; align-items: center; justify-content: space-around;
+  background: rgba(255,255,255,.85); border-top: 1px solid rgba(0,0,0,.04);
+  z-index: 40;
+}
+.reader-bottombar .b-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 10.5px; color: #666; background: none; border: none; cursor: pointer; padding: 4px 12px;
+}
+.reader-bottombar .b-btn .ico { font-size: 18px; line-height: 1; }
+/* 末尾「去聊天」模式：品牌色高亮、隐藏翻页箭头 */
+.reader-bottombar .b-btn.next-chat { color: var(--brand); font-weight: 600; }
+.reader-bottombar .b-btn.next-chat .chev { display: none; }
+
+/* ====== 目录抽屉 ====== */
+.drawer-mask { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 60; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.drawer-mask.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 76%; max-width: 300px;
+  background: #fff; z-index: 61; transform: translateX(-100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head { padding: calc(18px + max(var(--safe-top), 60px)) 18px 12px; border-bottom: 1px solid #f0f0f0; }
+.drawer-head .d-title { font-size: 15px; font-weight: 700; }
+.drawer-head .d-meta { font-size: 11.5px; color: #aaa; margin-top: 3px; }
+.drawer-list { flex: 1; overflow-y: auto; padding: 4px 0 calc(20px + var(--safe-bottom)); }
+.drawer-list li {
+  padding: 14px 18px; font-size: 14px; color: #333; border-left: 3px solid transparent; cursor: pointer;
+}
+.drawer-list li.active { color: var(--brand); border-left-color: var(--brand); background: #f6f8ff; font-weight: 600; }
+.drawer-list li.locked { color: #b5b5b5; cursor: pointer; }
+.drawer-list li.locked::after { content: "🔒"; margin-left: 6px; font-size: 11px; }
+/* 阅读抽屉世界分组头（v2） */
+.drawer-list li.drawer-world {
+  font-weight: 700; font-size: 14px; color: #1a1a1c; border-left-color: transparent;
+  cursor: default; padding: 18px 18px 8px;
+}
+.drawer-list li.drawer-world.active { color: #1a1a1c; border-left-color: transparent; background: transparent; font-weight: 700; }
+
+/* ====== 设置弹层（字号 + 背景，无行距） ====== */
+.sheet-mask { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 70; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.sheet-mask.open { opacity: 1; pointer-events: auto; }
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 16px 16px 0 0;
+  padding: 18px 20px calc(22px + var(--safe-bottom)); transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 71;
+}
+.sheet.open { transform: translateY(0); }
+/* 设置面板关闭按钮（与其它浮层一致） */
+.sheet-close {
+  position: absolute; top: 14px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.06); color: #999;
+  font-size: 15px; cursor: pointer; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+}
+.sheet-close:active { background: rgba(0,0,0,.12); }
+.sheet-block { margin-bottom: 20px; }
+.sheet-block:last-child { margin-bottom: 0; }
+.sheet-label { font-size: 12.5px; color: #999; margin-bottom: 10px; }
+
+.font-ctrl { display: flex; align-items: center; gap: 12px; }
+.font-ctrl button {
+  flex: 1; height: 40px; border: 1px solid #e5e5e5; background: #fafafa;
+  border-radius: 10px; font-size: 17px; cursor: pointer; color: #333;
+}
+.font-ctrl .fs-val { flex: 0 0 56px; text-align: center; font-size: 15px; font-weight: 600; }
+
+.theme-row { display: flex; gap: 9px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; }
+.theme-row::-webkit-scrollbar { display: none; }
+.theme-dot {
+  width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; cursor: pointer; position: relative; border: 2px solid transparent;
+  overflow: hidden;
+}
+.theme-dot.active { border-color: var(--brand); }
+.theme-dot.active::after {
+  content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+
+/* ====== 阅读主题（柔和色调，贴近微信读书） ====== */
+/* 默认：暖米色（参考截图） */
+.reader-page.theme-white { background: #f5edd8; }
+.theme-white .reader-scroll, .theme-white .reader-content p { color: #3d3424; }
+.theme-white .reader-topbar { color: #3d3424; }
+.theme-white .reader-bottombar { background: rgba(245,237,216,.5); border-top-color: rgba(0,0,0,.04); }
+
+/* 护眼绿 */
+.reader-page.theme-green { background: #e8f3e4; }
+.theme-green .reader-scroll, .theme-green .reader-content p { color: #2a3828; }
+.theme-green .reader-topbar { color: #2a3828; }
+.theme-green .reader-bottombar { background: rgba(232,243,228,.5); border-top-color: rgba(0,0,0,.04); }
+
+/* 宣纸纹理（图片平铺） */
+.reader-page.theme-xuanzhi {
+  background-image: url("../assets/bg-xuanzhi.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.theme-xuanzhi .reader-scroll, .theme-xuanzhi .reader-content p { color: #3d3424; }
+.theme-xuanzhi .reader-topbar { color: #3d3424; }
+.theme-xuanzhi .reader-bottombar { background: rgba(247,243,235,.55); border-top-color: rgba(0,0,0,.04); }
+
+/* 米白肌理纸 */
+.reader-page.theme-paper1 {
+  background-image: url("../assets/bg-paper1.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.theme-paper1 .reader-scroll, .theme-paper1 .reader-content p { color: #3a352c; }
+.theme-paper1 .reader-topbar { color: #3a352c; }
+.theme-paper1 .reader-bottombar { background: rgba(247,245,238,.55); border-top-color: rgba(0,0,0,.04); }
+
+/* 淡蓝渐变（默认） */
+.reader-page.theme-blue {
+  background-image: url("../assets/bg-reader-default.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.theme-blue .reader-scroll, .theme-blue .reader-content p { color: #33404f; }
+.theme-blue .reader-topbar { color: #33404f; }
+.theme-blue .reader-bottombar { background: rgba(233,241,250,.55); border-top-color: rgba(0,0,0,.04); }
+
+/* 柔粉暖橙渐变 */
+.reader-page.theme-gradient {
+  background-image: url("../assets/bg-gradient.png");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.theme-gradient .reader-scroll, .theme-gradient .reader-content p { color: #5a4a44; }
+.theme-gradient .reader-topbar { color: #5a4a44; }
+.theme-gradient .reader-bottombar { background: rgba(252,244,240,.5); border-top-color: rgba(0,0,0,.04); }
+
+/* 夜间 */
+.reader-page.theme-night { background: #1a1a1c; }
+.theme-night .reader-scroll, .theme-night .reader-content p { color: #9a9a9e; }
+.theme-night .reader-topbar { color: #b5b5b9; }
+.theme-night .reader-bottombar { background: rgba(28,28,30,.98); border-top-color: rgba(255,255,255,.05); }
+
+.center-tip { flex: 1; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; }
+
+/* ====== 付费解锁弹窗（放在 .phone 内、.page 外，避免 overflow:hidden 裁切底部电量文字） ====== */
+.pay-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 180; opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.pay-mask.open { opacity: 1; pointer-events: auto; }
+.pay-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #fff; border-radius: 18px 18px 0 0;
+  padding: 22px 20px calc(32px + var(--safe-bottom));
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+  z-index: 181; text-align: center;
+}
+.pay-sheet.open { transform: translateY(0); }
+.pay-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
+.pay-sub { font-size: 12.5px; color: #9a9a9a; line-height: 1.5; margin-bottom: 18px; }
+
+/* 选项按钮区：纵向排列两张大圆角 pill（按钮基底样式见统一的 .pay-opt-btn / .inline-pay-btn） */
+.pay-options { display: flex; flex-direction: column; gap: 12px; }
+
+/* 电量余额 */
+.pay-balance {
+  margin-top: 18px; font-size: 12px; color: #b0b0b0;
+}
+.pay-balance b { color: var(--brand); font-weight: 600; }
+
+/* ====== 末页内联付费按钮（有内容但未付费：截图1风格，嵌入阅读页正文区） ====== */
+.inline-pay-wrap {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 28px; padding-top: 20px;
+}
+/* 内联付费区底部电量余额 */
+.inline-pay-balance {
+  margin-top: 4px; text-align: center;
+  font-size: 12.5px; color: #8a95a5;
+}
+.inline-pay-balance b { color: var(--brand); font-weight: 600; }
+
+/* 内联付费按钮样式见上方统一的 .inline-pay-* 定义（与弹窗 pill 共用） */
+
+/* 空白付费页：正文区为空，按钮沉到该页最底部 */
+.locked-next-page {
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.locked-next-page .reader-content {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  width: 100%;
+}
+.locked-next-page .inline-pay-wrap {
+  margin-top: 0; padding-top: 0;
+}

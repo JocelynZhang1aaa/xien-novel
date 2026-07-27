@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>对话转小说</title>
+<link rel="stylesheet" href="css/style.css?v=60">
+<style>
+/* SPA 视图切换：三视图（解锁 / 简介 / 阅读） */
+.view-unlock  { display: flex; }
+.view-loading { display: none; }
+.view-intro  { display: none; }
+.view-reader { display: none; }
+body.show-loading .view-unlock  { display: none; }
+body.show-loading .view-loading { display: flex; }
+body.show-loading .view-intro   { display: none; }
+body.show-reader .view-unlock  { display: none; }
+body.show-reader .view-loading { display: none; }
+body.show-reader .view-intro   { display: none; }
+body.show-reader .view-reader  { display: flex;
+  /* 回退：非 show-reader 时只显示简介页（已解锁过的情况） */
+}
+body.show-intro-only .view-unlock  { display: none; }
+body.show-intro-only .view-intro   { display: flex; }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <!-- 状态栏（共用） -->
+    <div class="statusbar" id="statusbar">
+      <span id="statusTime">22:05</span>
+      <span class="icons"><span>5G</span><span class="bat"></span></span>
+    </div>
+
+    <!-- ====== 视图零：解锁页（N>50轮后进入） ====== -->
+    <div class="page unlock-page view-unlock" id="unlockPage">
+      <button class="intro-back" id="unlockBackBtn" title="返回"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+
+      <div class="unlock-scroll">
+        <!-- 装饰区：蓝发玩偶（无蓝色渐变遮罩） -->
+        <div class="unlock-visual">
+          <img class="unlock-mascot" src="assets/unlock-mascot.png" alt="" draggable="false">
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="unlock-title">开启和 Ta 的专属小说</h1>
+        <div class="unlock-title-line"></div>
+
+        <!-- 功能说明卡片 -->
+        <div class="unlock-feature">
+          <div class="unlock-feature-icon">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="4" y="6" width="24" height="28" rx="3" stroke="currentColor" stroke-width="2.2"/><line x1="10" y1="14" x2="22" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="26" x2="16" y2="26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#FFD166"/><path d="M27 30l2 2 4-4" stroke="#1a1a1c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="unlock-feature-text">
+            <div class="unlock-feature-title">一键成书</div>
+            <div class="unlock-feature-desc">把你和 Ta 的聊天，编成一本属于你们的小说，随聊天持续更新。</div>
+          </div>
+        </div>
+
+        <!-- 底部解锁按钮区 -->
+        <div class="unlock-action">
+          <button class="unlock-btn" id="unlockBtn">
+            <span>解锁第 1 章</span>
+            <span class="unlock-btn-price" id="unlockBtnPrice">⚡️限时免费</span>
+          </button>
+          <div class="unlock-balance" id="unlockBalance"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图零点五：Loading 页（解锁后 8s mock 加载） ====== -->
+    <div class="page loading-page view-loading" id="loadingPage">
+      <button class="intro-back" id="loadingBackBtn" title="返回"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+
+      <div class="loading-body">
+        <!-- 玩偶从右下角探出头 -->
+        <div class="loading-visual">
+          <img class="loading-mascot" src="assets/loading-mascot.png" alt="" draggable="false">
+        </div>
+
+        <!-- 标题 + 轮播副文案 -->
+        <div class="loading-text-wrap">
+          <div class="loading-title">小说载入中</div>
+          <div class="loading-text-track" id="loadingTextTrack">
+            <span class="loading-line">翻过这一页，结局之前，都是序章</span>
+            <span class="loading-line">未知的结局，才是故事最迷人的地方</span>
+            <span class="loading-line">所有走向，都是我们走过的证据</span>
+            <span class="loading-line">退出不影响载入哦……</span>
+            <span class="loading-line">我们的故事正在加载中……</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 视图一：简介页 ====== -->
+    <div class="page intro-page view-intro" id="introPage">
+      <button class="intro-back" id="backBtn" title="返回"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+
+      <div class="intro-scroll" id="introScroll">
+        <div class="intro-cover-wrap" id="coverWrap">
+          <img class="cover-img" id="coverImg" src="" alt="">
+        </div>
+        <div class="intro-body">
+          <h1 class="novel-title" id="novelTitle"></h1>
+          <div class="author-row" id="authorRow">
+            <span class="author-name" id="authorName"></span>
+          </div>
+          <div class="tags-row" id="tagsRow"></div>
+          <div class="intro-section">
+            <div class="section-head">简介</div>
+            <div class="intro-desc">
+              <div class="novel-intro" id="novelIntro"></div>
+              <span class="intro-more" id="introMore">更多</span>
+            </div>
+          </div>
+          <div class="toc-preview">
+            <div class="section-head">目录</div>
+            <ul class="toc-list" id="tocList"></ul>
+          </div>
+          <div class="start-read-bar">
+            <div class="start-read-hint">继续聊天触发小说更新</div>
+            <div class="start-read-actions">
+              <button class="intro-bulk-btn" id="introBulkBtn"><span>多章折扣</span></button>
+              <button class="start-read-btn" id="startReadBtn">点击开始阅读</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 简介页付费半弹窗 -->
+      <div class="intro-pay-mask" id="introPayMask"></div>
+      <div class="intro-pay-sheet" id="introPaySheet">
+        <button class="intro-pay-close" id="introPayClose">✕</button>
+        <div class="intro-pay-visual">
+          <div class="intro-pay-mascot"><img src="assets/pay-mascot.png" alt="" draggable="false"></div>
+        </div>
+        <div class="intro-pay-text">购买任意章节，开启小说更新</div>
+        <div class="intro-pay-options">
+          <button class="pay-opt-btn pay-opt-bundle" id="introPayBundle">
+            <span class="pay-opt-label" id="introBundleLabel">9 折优惠解锁 2 章</span>
+            <span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price" id="introBundlePrice">360 电量</span></span>
+          </button>
+          <button class="pay-opt-btn pay-opt-single" id="introPaySingle">
+            <span class="pay-opt-label" id="introSingleLabel">解锁下 1 章</span>
+            <span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price" id="introSinglePrice">200 电量</span></span>
+          </button>
+        </div>
+        <div class="intro-pay-balance" id="introPayBalance"></div>
+      </div>
+    </div>
+
+    <!-- ====== 视图二：阅读页 ====== -->
+    <div class="page reader-page theme-blue view-reader" id="readerPage">
+      <div class="reader-topbar" id="topbar">
+        <button class="t-btn" id="readerBackBtn" title="返回简介"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="chapter-info">
+          <div class="chapter-name" id="chapterName"></div>
+          <div class="chapter-sub">由 AI 生成</div>
+        </div>
+      </div>
+
+      <div class="reader-scroll" id="readerScroll">
+        <div class="reader-track" id="readerTrack"></div>
+      </div>
+
+      <div class="reader-bottombar">
+        <button class="b-btn" id="prevBtn">
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>上一页</span>
+        </button>
+        <button class="b-btn" id="tocBtn2"><span class="ico">☰</span><span>目录</span></button>
+        <button class="b-btn" id="setBtn"><span class="ico">Aa</span><span>设置</span></button>
+        <button class="b-btn" id="nextBtn">
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg><span>下一页</span>
+        </button>
+      </div>
+
+      <!-- 目录抽屉 -->
+      <div class="drawer-mask" id="drawerMask"></div>
+      <div class="drawer" id="drawer">
+        <div class="drawer-head">
+          <div class="d-title" id="drawerTitle"></div>
+          <div class="d-meta" id="drawerMeta"></div>
+        </div>
+        <ul class="drawer-list" id="drawerList"></ul>
+      </div>
+
+      <!-- 设置弹层 -->
+      <div class="sheet-mask" id="sheetMask"></div>
+      <div class="sheet" id="sheet">
+        <button class="sheet-close" id="sheetClose" aria-label="关闭">✕</button>
+        <div class="sheet-block">
+          <div class="sheet-label">字号</div>
+          <div class="font-ctrl">
+            <button id="fontMinus">A−</button>
+            <div class="fs-val" id="fontVal">18</div>
+            <button id="fontPlus">A+</button>
+          </div>
+        </div>
+        <div class="sheet-block">
+          <div class="sheet-label">背景</div>
+          <div class="theme-row" id="themeRow">
+            <div class="theme-dot" data-theme="theme-blue" style="background-image:url('assets/bg-reader-default.jpg'); background-size:cover"></div>
+            <div class="theme-dot" data-theme="theme-white" style="background:#f5edd8"></div>
+            <div class="theme-dot" data-theme="theme-green" style="background:#e8f3e4"></div>
+            <div class="theme-dot" data-theme="theme-xuanzhi" style="background-image:url('assets/bg-xuanzhi.jpg'); background-size:cover"></div>
+            <div class="theme-dot" data-theme="theme-paper1" style="background-image:url('assets/bg-paper1.jpg'); background-size:cover"></div>
+            <div class="theme-dot" data-theme="theme-gradient" style="background-image:url('assets/bg-gradient.png'); background-size:cover"></div>
+            <div class="theme-dot" data-theme="theme-night" style="background:#1a1a1c"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 阅读页付费弹窗（移到 phone 层级避免被 page overflow:hidden 裁切） -->
+    </div>
+
+    <!-- 付费弹窗（放在 phone 内、page 外，避免被 overflow:hidden 裁切底部电量文字） -->
+    <div class="pay-mask" id="payMask"></div>
+    <div class="pay-sheet" id="paySheet">
+      <div class="pay-title" id="payTitle">解锁下一章</div>
+      <div class="pay-sub" id="paySub">解锁后即可畅读完整内容</div>
+      <div class="pay-options" id="payOptions">
+        <button class="pay-opt-btn pay-opt-bundle" id="payOptBundle">
+          <span class="pay-opt-label" id="payBundleLabel">9 折优惠解锁 2 章</span>
+          <span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price" id="payBundlePrice">360 电量</span></span>
+        </button>
+        <button class="pay-opt-btn pay-opt-single" id="payOptSingle">
+          <span class="pay-opt-label" id="paySingleLabel">解锁本章</span>
+          <span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price" id="paySinglePrice">200 电量</span></span>
+        </button>
+      </div>
+      <div class="pay-balance" id="payBalance"></div>
+    </div>
+  </div>
+
+  <script src="data_v2.js"></script>
+  <script src="js/app.js?v=60"></script>
+</body>
+</html>
