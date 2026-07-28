@@ -796,6 +796,9 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 .inline-pay-wrap {
   display: flex; flex-direction: column; gap: 12px;
   margin-top: 28px; padding-top: 20px;
+  /* 与两个弹窗按钮同宽：抵消正文区 24px 内边距，改用弹窗的 20px 内边距 */
+  margin-left: -24px; margin-right: -24px;
+  padding-left: 20px; padding-right: 20px;
 }
 /* 内联付费区底部电量余额 */
 .inline-pay-balance {
