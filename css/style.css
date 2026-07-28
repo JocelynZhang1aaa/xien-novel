@@ -512,7 +512,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
   padding: 0 4px 0 24px; box-sizing: border-box;
 }
 .pay-opt-btn { height: 54px; }
-.inline-pay-btn { height: 52px; }
+.inline-pay-btn { height: 54px; }
 .pay-opt-label, .inline-pay-label { flex: 1; text-align: left; white-space: nowrap; }
 
 /* 右侧价格标签（🐾 + 价格） */
