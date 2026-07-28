@@ -41,10 +41,12 @@ body {
   box-shadow: none;
 }
 
-/* 手机竖屏：铺满整屏，按手机实际尺寸自适应（含刘海安全区，已全局生效） */
-@media (max-width: 600px) and (orientation: portrait) {
-  body { padding: 0; overflow: hidden; }
+/* 手机端（竖屏或窄屏）：铺满整屏，用 fixed 定位确保无留白 */
+@media (max-width: 800px), (orientation: portrait) and (max-height: 900px) {
+  body { padding: 0 !important; overflow: hidden; }
   .phone.no-frame {
+    position: fixed;
+    top: 0; left: 0;
     width: 100vw;
     height: 100vh;
     height: 100dvh;
