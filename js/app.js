@@ -67,6 +67,8 @@
     if (hasUnlockedBefore()) {
       body.classList.add("show-intro-only");
     }
+    // 每次进入简介页都按最新付费状态重渲染目录锁态（修复：章节内付费后回简介仍显示未解锁）
+    if (typeof buildToc === "function") buildToc();
   }
   function showReader() { body.classList.add("show-reader"); }
 
