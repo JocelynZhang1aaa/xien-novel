@@ -534,12 +534,12 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 }
 .pay-opt-bundle:active, .inline-pay-bulk:active { background: rgba(var(--brand-rgb), .22); }
 
-/* 单章解锁（透明底 + 蓝框 + 蓝字） */
+/* 单章解锁（与批量折扣统一样式：浅蓝底 + 蓝框 + 蓝字） */
 .pay-opt-single, .inline-pay-single {
-  background: transparent; color: var(--brand);
+  background: rgba(var(--brand-rgb), .12); color: var(--brand);
   border: 1px solid rgba(var(--brand-rgb), .45);
 }
-.pay-opt-single:active, .inline-pay-single:active { background: rgba(var(--brand-rgb), .08); }
+.pay-opt-single:active, .inline-pay-single:active { background: rgba(var(--brand-rgb), .22); }
 
 
 /* ===================== 页面二：阅读页（微信读书风 · iPhone 15） ===================== */
