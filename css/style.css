@@ -726,6 +726,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 
 /* 宣纸纹理（图片平铺） */
 .reader-page.theme-xuanzhi {
+  background-color: #f7f3eb; /* 宣纸色兜底，避免图片加载前闪烁 */
   background-image: url("../assets/bg-xuanzhi.jpg");
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
@@ -735,6 +736,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 
 /* 米白肌理纸 */
 .reader-page.theme-paper1 {
+  background-color: #f7f5ee; /* 米白纸色兜底，避免图片加载前闪烁 */
   background-image: url("../assets/bg-paper1.jpg");
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
@@ -744,6 +746,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 
 /* 淡蓝渐变（默认） */
 .reader-page.theme-blue {
+  background-color: #e9f1fa; /* 蓝底兜底：图片异步加载前即为蓝色，消除黄→蓝闪烁 */
   background-image: url("../assets/bg-reader-default.jpg");
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
@@ -753,6 +756,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 
 /* 柔粉暖橙渐变 */
 .reader-page.theme-gradient {
+  background-color: #fbeee9; /* 暖色兜底，避免图片加载前闪烁 */
   background-image: url("../assets/bg-gradient.png");
   background-size: cover; background-position: center; background-repeat: no-repeat;
 }
