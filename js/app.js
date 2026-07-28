@@ -818,14 +818,14 @@
       for (var bi = 0; bi < total; bi++) { if (!isUnlocked(chapters[bi])) { bulkFrom = bi; break; } }
       var bulk = calcBulkInfo(bulkFrom);
       if (bulk.count > 1) {
-        var btnB = document.createElement("button"); btnB.className = "inline-pay-btn inline-pay-bulk";
+        var btnB = document.createElement("button"); btnB.className = "pay-opt-btn pay-opt-bulk";
         var dt = bundleLabelText(bulk.discount);
-        btnB.innerHTML = '<span class="inline-pay-label">' + dt + '</span><span class="inline-pay-tag"><span class="inline-tag-icon">🐾</span><span class="inline-tag-price">' + bulk.finalPrice + ' ' + pay.unit + '</span></span>';
+        btnB.innerHTML = '<span class="pay-opt-label">' + dt + '</span><span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price">' + bulk.finalPrice + ' ' + pay.unit + '</span></span>';
         btnB.addEventListener("click", function () { doInlineBulk(lockedIdx); }); wrap.appendChild(btnB);
       }
       var ch2 = chapters[lockedIdx], up = CHAPTER_PRICE;
-      var btnS = document.createElement("button"); btnS.className = "inline-pay-btn inline-pay-single";
-      btnS.innerHTML = '<span class="inline-pay-label">解锁本章</span><span class="inline-pay-tag"><span class="inline-tag-icon">🐾</span><span class="inline-tag-price">' + up + ' ' + pay.unit + '</span></span>';
+      var btnS = document.createElement("button"); btnS.className = "pay-opt-btn pay-opt-single";
+      btnS.innerHTML = '<span class="pay-opt-label">解锁本章</span><span class="pay-opt-tag"><span class="pay-tag-icon">🐾</span><span class="pay-tag-price">' + up + ' ' + pay.unit + '</span></span>';
       btnS.addEventListener("click", function () { doInlineSingle(lockedIdx); }); wrap.appendChild(btnS);
 
       // 底部电量余额

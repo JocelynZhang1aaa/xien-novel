@@ -510,9 +510,11 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
   font-size: 16px; font-weight: 700; letter-spacing: .3px; cursor: pointer;
   border: none; transition: all .15s;
   padding: 0 4px 0 24px; box-sizing: border-box;
+  /* 高度三重锁死：三个地方完全一致 */
+  height: 54px !important; min-height: 54px !important; max-height: 54px !important;
+  overflow: hidden;
 }
-.pay-opt-btn { height: 54px; }
-.inline-pay-btn { height: 54px; }
+/* 高度已在上方共享规则中统一锁死 54px */
 .pay-opt-label, .inline-pay-label { flex: 1; text-align: left; white-space: nowrap; }
 
 /* 右侧价格标签（🐾 + 价格） */
