@@ -41,8 +41,23 @@ body {
   box-shadow: none;
 }
 
-/* 手机端（竖屏或窄屏）：铺满整屏，用 fixed 定位确保无留白 */
-@media (max-width: 800px), (orientation: portrait) and (max-height: 900px) {
+/* 手机端（竖屏，或横屏窄屏）：铺满整屏，用 fixed 定位确保无留白 */
+/* 以 orientation:portrait 为主触发（不限制高度），覆盖 1080×1920 等高分屏 */
+@media (orientation: portrait) {
+  body { padding: 0 !important; overflow: hidden; }
+  .phone.no-frame {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
   body { padding: 0 !important; overflow: hidden; }
   .phone.no-frame {
     position: fixed;
