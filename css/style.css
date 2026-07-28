@@ -528,7 +528,7 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 }
 .pay-tag-icon, .inline-tag-icon { font-size: 14px; }
 
-/* 批量折扣（浅蓝底 + 蓝字 + 蓝框） */
+/* 批量折扣（浅蓝填充底 = 推荐/默认选中态） */
 .pay-opt-bundle, .inline-pay-bulk {
   background: rgba(var(--brand-rgb), .12);
   color: var(--brand);
@@ -536,12 +536,13 @@ body.show-intro-only .view-intro  { visibility: visible !important; pointer-even
 }
 .pay-opt-bundle:active, .inline-pay-bulk:active { background: rgba(var(--brand-rgb), .22); }
 
-/* 单章解锁（与批量折扣统一样式：浅蓝底 + 蓝框 + 蓝字） */
+/* 单章解锁（透明底 + 蓝框 = 次选，不突出） */
 .pay-opt-single, .inline-pay-single {
-  background: rgba(var(--brand-rgb), .12); color: var(--brand);
-  border: 1px solid rgba(var(--brand-rgb), .45);
+  background: transparent;
+  color: var(--brand);
+  border: 1px solid rgba(var(--brand-rgb), .35);
 }
-.pay-opt-single:active, .inline-pay-single:active { background: rgba(var(--brand-rgb), .22); }
+.pay-opt-single:active, .inline-pay-single:active { background: rgba(var(--brand-rgb), .06); }
 
 
 /* ===================== 页面二：阅读页（微信读书风 · iPhone 15） ===================== */
